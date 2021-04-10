@@ -1,0 +1,51 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: jorge
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: dockerphp
+    container_name: pruebas-rabbit-php
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./app:/var/www
+    networks:
+      - pruebas-rabbit
+    
+
+  nginx:
+    image: nginx:alpine
+    container_name: pruebas-rabbit-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./app:/var/www/
+      - ./docker-compose/nginx:/etc/nginx/conf.d
+    networks:
+      - pruebas-rabbit
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    volumes:
+      - ./.docker/rabbitmq/etc/:/tmp/rabbitmq/
+      - ./.docker/rabbitmq/data/:/tmp/var/lib/rabbitmq/
+      - ./.docker/rabbitmq/logs/:/tmp/var/log/rabbitmq/
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - pruebas-rabbit
+
+networks:
+  pruebas-rabbit:
+    driver: bridge
